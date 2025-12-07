@@ -99,6 +99,7 @@ export interface ProcessedData {
   // Balance Sheet Sections
   balanceSheet?: {
     investments: ReportSection; // New Investments section
+    productionInProgress: ReportSection; // New: Productie in uitvoering
     assetDepreciation: ReportSection; // New: Afschrijvingen (Activa)
     liquidAssets: ReportSection; // Liquide Middelen
     accountsReceivable: ReportSection; // Debiteuren

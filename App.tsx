@@ -128,6 +128,10 @@ const generateMockData = (lang: 'nl' | 'en'): FinancialRecord[] => {
     ? ['Inventaris Keuken', 'Vervoermiddelen']
     : ['Inventory Kitchen', 'Transport Vehicles'];
 
+  const prodInProgressItems = isNl
+    ? ['Voorraad Grondstoffen', 'Onderhanden Werk Projecten']
+    : ['Raw Materials Inventory', 'Work in Progress Projects'];
+
   const assetDepreciationItems = isNl
     ? ['Afschrijving Inventaris Keuken', 'Afschrijving Vervoermiddelen']
     : ['Depreciation Inventory Kitchen', 'Depreciation Transport Vehicles'];
@@ -221,6 +225,7 @@ const generateMockData = (lang: 'nl' | 'en'): FinancialRecord[] => {
 
       // Balance Sheet Data
       investmentItems.forEach(i => addRecord(i, 20000, 50000, '02', 'asset', offset));
+      prodInProgressItems.forEach(i => addRecord(i, 5000, 20000, '03', 'asset', offset));
       assetDepreciationItems.forEach(i => addRecord(i, 5000, 15000, '02', 'asset', offset));
       assetItems.forEach(i => addRecord(i, 5000, 10000, '01', 'asset', offset)); 
       arItems.forEach(i => addRecord(i, 2000, 15000, '13', 'asset', offset));
@@ -535,6 +540,7 @@ const App: React.FC = () => {
           nonOperationalExpenses: [],
           resultsAdjustments: [],
           investments: [],
+          productionInProgress: [], // New: Productie in uitvoering
           assetDepreciation: [], 
           liquidAssets: [],
           accountsReceivable: [],
@@ -611,6 +617,10 @@ const App: React.FC = () => {
                         // If here, it is the asset itself.
                         targetBucket = 'investments';
                     }
+                    else if (lowerDesc.includes('voorraad') || lowerDesc.includes('onderhanden werk')) {
+                        // New: Productie in uitvoering
+                        targetBucket = 'productionInProgress';
+                    }
                     else if (isDirectObligation(desc)) {
                         targetBucket = 'directObligations';
                     }
@@ -685,7 +695,7 @@ const App: React.FC = () => {
             buckets[targetBucket].push({ name: desc, value: amount });
         }
 
-        if (gl >= 4000 && targetBucket !== 'resultsAdjustments' && targetBucket !== 'equity' && targetBucket !== 'assets' && targetBucket !== 'liabilities' && targetBucket !== 'liquidAssets' && targetBucket !== 'currentAccounts' && targetBucket !== 'directObligations' && targetBucket !== 'investments' && targetBucket !== 'assetDepreciation' && targetBucket !== 'accountsReceivable' && targetBucket !== 'accountsPayable' && targetBucket !== 'externalFinancing') {
+        if (gl >= 4000 && targetBucket !== 'resultsAdjustments' && targetBucket !== 'equity' && targetBucket !== 'assets' && targetBucket !== 'liabilities' && targetBucket !== 'liquidAssets' && targetBucket !== 'currentAccounts' && targetBucket !== 'directObligations' && targetBucket !== 'investments' && targetBucket !== 'productionInProgress' && targetBucket !== 'assetDepreciation' && targetBucket !== 'accountsReceivable' && targetBucket !== 'accountsPayable' && targetBucket !== 'externalFinancing') {
              if (!monthlyStats[monthKey]) monthlyStats[monthKey] = { revenue: 0, costs: 0 };
              if (targetBucket === 'sales' || targetBucket === 'recurring') {
                  monthlyStats[monthKey].revenue += amount;
@@ -713,6 +723,7 @@ const App: React.FC = () => {
       
       const finalLiquidAssets = applySort(groupItems(buckets.liquidAssets), 'liquidAssets');
       const finalInvestments = applySort(groupItems(buckets.investments), 'investments');
+      const finalProductionInProgress = applySort(groupItems(buckets.productionInProgress), 'productionInProgress');
       const finalAssetDepreciation = applySort(groupItems(buckets.assetDepreciation), 'assetDepreciation');
       const finalAR = applySort(groupItems(buckets.accountsReceivable), 'accountsReceivable');
       const finalAssets = applySort(groupItems(buckets.assets), 'assets');
@@ -738,9 +749,10 @@ const App: React.FC = () => {
       
       const totalLiquidAssets = finalLiquidAssets.reduce((sum, i) => sum + i.value, 0);
       const totalInvestments = finalInvestments.reduce((sum, i) => sum + i.value, 0);
+      const totalProductionInProgress = finalProductionInProgress.reduce((sum, i) => sum + i.value, 0);
       const totalAssetDepreciation = finalAssetDepreciation.reduce((sum, i) => sum + i.value, 0);
       const totalAR = finalAR.reduce((sum, i) => sum + i.value, 0);
-      const totalAssets = finalAssets.reduce((sum, i) => sum + i.value, 0) + totalLiquidAssets + totalInvestments + totalAssetDepreciation + totalAR;
+      const totalAssets = finalAssets.reduce((sum, i) => sum + i.value, 0) + totalLiquidAssets + totalInvestments + totalProductionInProgress + totalAssetDepreciation + totalAR;
       
       const totalDirectObligations = finalDirectObligations.reduce((sum, i) => sum + i.value, 0);
       const totalCurrentAccounts = finalCurrentAccounts.reduce((sum, i) => sum + i.value, 0);
@@ -799,10 +811,11 @@ const App: React.FC = () => {
         resultsAdjustments: { items: finalResultsAdjustments, total: totalResultsAdjustments },
         balanceSheet: {
             investments: { items: finalInvestments, total: totalInvestments },
+            productionInProgress: { items: finalProductionInProgress, total: totalProductionInProgress },
             assetDepreciation: { items: finalAssetDepreciation, total: totalAssetDepreciation },
             liquidAssets: { items: finalLiquidAssets, total: totalLiquidAssets },
             accountsReceivable: { items: finalAR, total: totalAR },
-            assets: { items: finalAssets, total: totalAssets - totalLiquidAssets - totalInvestments - totalAssetDepreciation - totalAR }, 
+            assets: { items: finalAssets, total: totalAssets - totalLiquidAssets - totalInvestments - totalProductionInProgress - totalAssetDepreciation - totalAR }, 
             accountsPayable: { items: finalAP, total: totalAP },
             liabilities: { items: finalLiabilities, total: totalLiabilities - totalCurrentAccounts - totalDirectObligations - totalAP - totalExternalFinancing},
             externalFinancing: { items: finalExternalFinancing, total: totalExternalFinancing },
@@ -1191,7 +1204,7 @@ const App: React.FC = () => {
       }
 
       // 3. R/C in Assets (Purple)
-      const isAsset = ['assets', 'liquidAssets', 'investments'].includes(currentSection);
+      const isAsset = ['assets', 'liquidAssets', 'investments', 'productionInProgress'].includes(currentSection);
       if (isAsset && isRCItem(itemName)) {
           return 'bg-purple-50 text-purple-800 border-l-4 border-purple-300 pl-2';
       }
@@ -1800,6 +1813,7 @@ const App: React.FC = () => {
 
       const balanceSections = [
         { title: t.investments, key: 'investments', isCredit: false },
+        { title: t.productionInProgress, key: 'productionInProgress', isCredit: false },
         { title: 'Overige Activa', key: 'assets', isCredit: false },
         { title: t.liquidAssets, key: 'liquidAssets', isCredit: false },
         { title: t.assetDepreciation, key: 'assetDepreciation', isCredit: false }, 
@@ -2705,6 +2719,19 @@ const App: React.FC = () => {
                                 getItemClass={(name) => getRowClass(name, 'investments')}
                             />
 
+                             {/* PRODUCTION IN PROGRESS (NEW) */}
+                             <ReportTable 
+                                id="productionInProgress"
+                                title={t.productionInProgress} 
+                                section={processedData.balanceSheet!.productionInProgress} 
+                                currencyFormatter={currencyFormatter}
+                                themeColor={themeColors.text}
+                                totalLabel={t.total}
+                                onReorder={handleReorder}
+                                onMoveItem={handleMoveItem}
+                                getItemClass={(name) => getRowClass(name, 'productionInProgress')}
+                            />
+
                              {/* REMAINING ASSETS */}
                              <ReportTable 
                                 id="assets"
@@ -2906,6 +2933,7 @@ const App: React.FC = () => {
                             <div className="w-full">
                                 <h3 className="text-xl font-bold mb-6 border-b border-gray-300 pb-2 text-gray-800">{t.balanceSheet}</h3>
                                 {renderComparisonTable(t.investments, 'investments', false, 'up')}
+                                {renderComparisonTable(t.productionInProgress, 'productionInProgress', false, 'up')}
                                 {renderComparisonTable('Overige Activa', 'assets', false, 'up')}
                                 {renderComparisonTable(t.liquidAssets, 'liquidAssets', false, 'up')}
                                 {renderComparisonTable(t.assetDepreciation, 'assetDepreciation', false, 'down')}

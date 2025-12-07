@@ -137,13 +137,14 @@ export const TRANSLATIONS = {
     loadDemo: 'Laad voorbeeld rapport',
     currentAssets: 'Vlottende Activa',
     fixedAssets: 'Vaste Activa',
-    liquidAssets: 'Liquide Middelen',
+    liquidAssets: 'Direct beschikbare middelen', // Renamed
     equity: 'Eigen Vermogen',
     shortTermLiabilities: 'Kortlopende Schulden',
     longTermLiabilities: 'Langlopende Schulden',
     currentAccounts: 'Rekening Couranten',
     directObligations: 'Directe Verplichtingen', // New translation
     investments: '(Upfront) Investeringen', // New translation
+    productionInProgress: 'Productie in uitvoering', // New translation
     assetDepreciation: 'Afschrijvingen (Activa)', // New translation
     externalFinancing: 'Externe Financiering', // New translation
     // Health Check
@@ -261,13 +262,14 @@ export const TRANSLATIONS = {
     loadDemo: 'Load example report',
     currentAssets: 'Current Assets',
     fixedAssets: 'Fixed Assets',
-    liquidAssets: 'Liquid Assets',
+    liquidAssets: 'Directly Available Funds', // Consistent translation
     equity: 'Equity',
     shortTermLiabilities: 'Short-term Liabilities',
     longTermLiabilities: 'Long-term Liabilities',
     currentAccounts: 'Current Accounts',
     directObligations: 'Direct Obligations', // New translation
     investments: '(Upfront) Investments', // New translation
+    productionInProgress: 'Production in Progress', // New translation
     assetDepreciation: 'Asset Depreciation', // New translation
     externalFinancing: 'External Financing', // New translation
     // Health Check
